@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from ase.optimize import FIRE
 from monty.dev import requires
-
+from copy import deepcopy
 from quacc import fetch_atoms, job
 from quacc.builders.thermo import build_ideal_gas
 from quacc.runners.calc import run_ase_opt, run_ase_vib, run_calc
@@ -16,6 +16,11 @@ try:
     from tblite.ase import TBLite
 except ImportError:
     TBLite = None
+
+try:
+    from xtb.ase.calculator import XTB
+except (ModuleNotFoundError, ImportError):
+    XTB = None
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -191,14 +196,17 @@ def freq_job(
     VibThermoSchema
         Dictionary of results from [quacc.schemas.ase.summarize_vib_and_thermo][]
     """
+
     atoms = fetch_atoms(atoms)
+    atoms1 = deepcopy(atoms)
     vib_kwargs = vib_kwargs or {}
 
     defaults = {"method": method}
     flags = merge_dicts(defaults, calc_swaps)
+    atoms1.calc = XTB(**flags)
     atoms.calc = TBLite(**flags)
 
-    vibrations = run_ase_vib(atoms, vib_kwargs=vib_kwargs, copy_files=copy_files)
+    vibrations = run_ase_vib(atoms1, vib_kwargs=vib_kwargs, copy_files=copy_files)
     igt = build_ideal_gas(atoms, vibrations.get_frequencies(), energy=energy)
 
     return summarize_vib_and_thermo(
