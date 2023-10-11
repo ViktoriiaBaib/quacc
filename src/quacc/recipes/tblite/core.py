@@ -203,7 +203,7 @@ def freq_job(
 
     defaults = {"method": method}
     flags = merge_dicts(defaults, calc_swaps)
-    atoms1.calc = XTB(**flags)
+    atoms1.calc = XTB(method="GFN2-xTB", solvent="octanol")
     atoms.calc = TBLite(**flags)
 
     vibrations = run_ase_vib(atoms1, vib_kwargs=vib_kwargs, copy_files=copy_files)
